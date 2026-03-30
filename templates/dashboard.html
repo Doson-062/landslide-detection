@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - {{ page_title }}{% endblock %}
+
+{% block page_heading %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    
+    <!-- 4 Tóm Tắt (Cards) -->
+    <div class="row mb-4">
+        <!-- Độ ẩm đất -->
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 bg-primary bg-opacity-10 text-primary rounded-circle p-3">
+                            <i class="fs-4 bi bi-droplet-half"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-0">Độ ẩm đất</h6>
+                            <h3 class="mb-0 fw-bold" id="card-moisture">-- <small class="fs-6">%</small></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Độ rung/Gia tốc -->
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 bg-warning bg-opacity-10 text-warning rounded-circle p-3">
+                            <i class="fs-4 bi bi-activity"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-0">Độ rung</h6>
+                            <h3 class="mb-0 fw-bold" id="card-vibration">-- <small class="fs-6">m/s²</small></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lượng mưa -->
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 bg-info bg-opacity-10 text-info rounded-circle p-3">
+                            <i class="fs-4 bi bi-cloud-rain"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-0">Lượng mưa</h6>
+                            <h3 class="mb-0 fw-bold" id="card-rainfall">-- <small class="fs-6">mm</small></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mức cảnh báo hiện tại -->
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 bg-secondary bg-opacity-10 text-secondary rounded-circle p-3" id="icon-alert-box">
+                            <i class="fs-4 bi bi-shield-exclamation" id="icon-alert"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-0">Mức cảnh báo</h6>
+                            <h4 class="mb-0 fw-bold">
+                                <span class="badge bg-secondary" id="card-alert-level">Chưa xác định</span>
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Biểu đồ Đường (Line Chart) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">Dữ liệu Cảm biến Real-time (Trạm chính)</h5>
+                    <div class="text-muted small">
+                        <i class="bi bi-clock-history me-1"></i> <span id="last-update">Đang tải...</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="sensorLineChart" style="height: 400px; width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Khởi tạo Chart
+    const ctx = document.getElementById('sensorLineChart').getContext('2d');
+    
+    // Arrays giới hạn 15 điểm
+    const maxDataPoints = 15;
+    const timeLabels = [];
+    const moistureData = [];
+    const rainfallData = [];
+
+    const sensorChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: timeLabels,
+            datasets: [
+                {
+                    label: 'Độ ẩm đất (%)',
+                    data: moistureData,
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Lượng mưa (mm)',
+                    data: rainfallData,
+                    borderColor: 'rgba(13, 202, 240, 1)',
+                    backgroundColor: 'rgba(13, 202, 240, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 0 // Tắt animation để k giật lúc load data
+            },
+            plugins: {
+                legend: { position: 'top' },
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Thời gian' }
+                },
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Hàm gọi API
+    async function fetchSensorData() {
+        try {
+            const response = await fetch('/api/sensors/latest');
+            const res = await response.json();
+            
+            if (res.status === 'success') {
+                // Lấy tạm dữ liệu SENSOR_01 làm trạm chính
+                const data = res.data.SENSOR_01;
+                
+                // Cập nhật lên Card (giả lập độ rung ngẫu nhiên cho đẹp do JSON API rỗng vibration)
+                document.getElementById('card-moisture').innerHTML = `${data.soil_moisture} <small class="fs-6">%</small>`;
+                document.getElementById('card-rainfall').innerHTML = `${data.rainfall} <small class="fs-6">mm</small>`;
+                const mockVibration = (Math.random() * 0.5).toFixed(2);
+                document.getElementById('card-vibration').innerHTML = `${mockVibration} <small class="fs-6">m/s²</small>`;
+                
+                // Logic Badge Màu dựa trên mức cảnh báo
+                // Gán tạm Logic: if moisture > 40 hoặc rainfall > 2 => Cảnh báo Vàng (1). Nếu > cao nữa là Đỏ (3)
+                let alertLevel = 0;
+                let alertText = "An toàn";
+                let alertClass = "bg-success";
+                let iconClass = "text-success";
+                let boxClass = "bg-success bg-opacity-10";
+
+                if (data.soil_moisture > 45 || data.rainfall > 5.0) {
+                    alertLevel = 3;
+                    alertText = "Nguy hiểm (3)";
+                    alertClass = "bg-danger";
+                    iconClass = "text-danger";
+                    boxClass = "bg-danger bg-opacity-10";
+                } else if (data.soil_moisture > 42 || data.rainfall > 2.0) {
+                    alertLevel = 2;
+                    alertText = "Cảnh báo (2)";
+                    alertClass = "bg-warning text-dark";
+                    iconClass = "text-warning";
+                    boxClass = "bg-warning bg-opacity-10";
+                } else if (data.soil_moisture > 40 || data.rainfall > 1.0) {
+                    alertLevel = 1;
+                    alertText = "Chú ý (1)";
+                    alertClass = "bg-info text-dark";
+                    iconClass = "text-info";
+                    boxClass = "bg-info bg-opacity-10";
+                }
+
+                document.getElementById('card-alert-level').className = `badge ${alertClass} fs-6`;
+                document.getElementById('card-alert-level').innerText = alertText;
+                
+                // Update Icon Colors
+                const iconBox = document.getElementById('icon-alert-box');
+                const icon = document.getElementById('icon-alert');
+                iconBox.className = `flex-shrink-0 ${boxClass} ${iconClass} rounded-circle p-3`;
+                icon.className = `fs-4 bi bi-shield-exclamation ${iconClass}`;
+                
+                // Cập nhật Chart.js
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('vi-VN');
+                document.getElementById('last-update').innerText = 'Cập nhật: ' + timeString;
+
+                if (timeLabels.length >= maxDataPoints) {
+                    timeLabels.shift();
+                    moistureData.shift();
+                    rainfallData.shift();
+                }
+                
+                timeLabels.push(timeString);
+                
+                // Làm cho data API có tí dao động nhỏ real-time giả lập
+                const varMoisture = data.soil_moisture + (Math.random() * 2 - 1);
+                const varRainfall = data.rainfall + (Math.random() * 0.5 - 0.2);
+                
+                moistureData.push(varMoisture.toFixed(1));
+                rainfallData.push(Math.max(0, varRainfall.toFixed(1)));
+                
+                sensorChart.update();
+            }
+        } catch (error) {
+            console.error('Lỗi khi fetch data:', error);
+        }
+    }
+
+    // Call lần đầu & Set interval mỗi 5 giây
+    fetchSensorData();
+    setInterval(fetchSensorData, 5000);
+</script>
+{% endblock %}

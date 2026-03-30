@@ -1,0 +1,151 @@
+/* ====================================
+   Hệ thống phát hiện và cảnh báo sạt lở
+   Custom CSS - Bổ sung cho Bootstrap 5
+   ==================================== */
+
+/* --- Base --- */
+:root {
+    --color-warning: #ffc107;
+    --color-alert: #fd7e14;
+    --color-critical: #dc3545;
+    --color-safe: #198754;
+    --color-bg: #f0f2f5;
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--color-bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* --- Card hover effect --- */
+.card-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* --- Pulse animation for status dot --- */
+.pulse-dot {
+    animation: pulse 2s infinite;
+    font-size: 0.5rem;
+    vertical-align: middle;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* --- Alert level badges --- */
+.badge-warning-level {
+    background-color: var(--color-warning) !important;
+    color: #212529 !important;
+}
+
+.badge-alert-level {
+    background-color: var(--color-alert) !important;
+    color: #fff !important;
+}
+
+.badge-critical-level {
+    background-color: var(--color-critical) !important;
+    color: #fff !important;
+    animation: critical-blink 1s infinite;
+}
+
+@keyframes critical-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* --- Alert list items --- */
+.alert-item {
+    border-left: 4px solid transparent;
+    transition: background-color 0.2s ease;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.25rem;
+    border-radius: 0.25rem;
+}
+
+.alert-item:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.alert-item.level-1 {
+    border-left-color: var(--color-warning);
+}
+
+.alert-item.level-2 {
+    border-left-color: var(--color-alert);
+}
+
+.alert-item.level-3 {
+    border-left-color: var(--color-critical);
+}
+
+/* --- Sensor cards --- */
+.sensor-card {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.sensor-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.sensor-unit {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* --- Map --- */
+.map-container {
+    border-radius: 12px;
+    overflow: hidden;
+    height: 500px;
+}
+
+/* --- Navbar active link --- */
+.navbar .nav-link.active {
+    color: #fff !important;
+    font-weight: 600;
+    border-bottom: 2px solid var(--color-warning);
+}
+
+/* --- Table styles --- */
+.table-alerts th {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #6c757d;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+    .sensor-value {
+        font-size: 1.5rem;
+    }
+
+    .map-container {
+        height: 350px;
+    }
+}
+
+/* --- Footer --- */
+.footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}

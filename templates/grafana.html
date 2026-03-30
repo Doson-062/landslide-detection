@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Grafana - {{ page_title }}{% endblock %}
+
+{% block page_heading %}<i class="bi bi-bar-chart-steps text-warning me-2"></i>{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid h-100">
+    <!-- Cảnh báo nếu chưa config -->
+    <div class="alert alert-info border-info alert-dismissible fade show" role="alert">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        <strong>Độ phân tích Nâng cao:</strong> Đây là trang nhúng của Grafana. Để biểu đồ Grafana hiển thị thực tế, hãy đảm bảo bạn đã cấu hình nhúng (iframe embedding=true) trong <code>grafana.ini</code> và chạy backend Grafana port 3000 ở cùng mạng.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Iframe Embed -->
+    <div class="card shadow-sm border-0 rounded-4 w-100" style="height: calc(100vh - 200px);">
+        <div class="card-body p-0 rounded-4 overflow-hidden position-relative bg-dark d-flex align-items-center justify-content-center">
+            
+            <!-- Đây là Placeholder mô phỏng khi chưa chạy được Localhost:3000 -->
+            <div class="text-center text-muted p-5 position-absolute placeholder-grafana" style="z-index: 0;">
+                <i class="bi bi-tools display-1 mb-3 text-secondary"></i>
+                <h3 class="text-light">Chưa cấu hình dịch vụ Grafana tại Port 3000</h3>
+                <p>Khung này sẽ được thay thế bằng Web Dashboard của Grafana qua thẻ <code>&lt;iframe&gt;</code></p>
+            </div>
+
+            <!-- src thẻ thay bằng ip Grafana của bạn, VD: http://localhost:3000/d/landslide/dashboard -->
+            <!-- Uncomment đoạn dưới nếu có Grafana live -->
+            <!--
+            <iframe 
+                src="http://localhost:3000/login" 
+                width="100%" 
+                height="100%" 
+                frameborder="0" 
+                style="z-index: 1; position: relative;"
+            ></iframe>
+            -->
+        </div>
+    </div>
+</div>
+{% endblock %}

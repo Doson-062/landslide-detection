@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Tổng quan - Hệ thống phát hiện sạt lở{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 fw-bold">
+            <i class="bi bi-speedometer2 me-2"></i>Tổng quan hệ thống
+        </h1>
+        <p class="text-muted">Giám sát trạng thái cảm biến và cảnh báo sạt lở</p>
+    </div>
+</div>
+
+<!-- Status Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm card-hover">
+            <div class="card-body text-center">
+                <div class="display-6 text-primary mb-2"><i class="bi bi-cpu"></i></div>
+                <h6 class="text-muted">Cảm biến hoạt động</h6>
+                <h2 class="fw-bold" id="sensor-count">3</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm card-hover">
+            <div class="card-body text-center">
+                <div class="display-6 text-success mb-2"><i class="bi bi-check-circle"></i></div>
+                <h6 class="text-muted">Trạng thái hệ thống</h6>
+                <h2 class="fw-bold text-success">{{ system_status|upper }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm card-hover">
+            <div class="card-body text-center">
+                <div class="display-6 text-warning mb-2"><i class="bi bi-exclamation-triangle"></i></div>
+                <h6 class="text-muted">Cảnh báo hôm nay</h6>
+                <h2 class="fw-bold" id="alert-count">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm card-hover">
+            <div class="card-body text-center">
+                <div class="display-6 text-danger mb-2"><i class="bi bi-shield-exclamation"></i></div>
+                <h6 class="text-muted">Mức nguy hiểm</h6>
+                <h2 class="fw-bold text-success" id="risk-level">Thấp</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Placeholder sections -->
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Biểu đồ sensor gần đây</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="overview-chart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0"><i class="bi bi-bell me-2"></i>Cảnh báo gần nhất</h5>
+            </div>
+            <div class="card-body" id="recent-alerts">
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-check-circle display-4 text-success"></i>
+                    <p class="mt-2">Không có cảnh báo nào</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+    // Biểu đồ placeholder - sẽ được thay bằng dữ liệu thực từ API
+    const ctx = document.getElementById('overview-chart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['--'],
+                datasets: [{
+                    label: 'Chưa có dữ liệu',
+                    data: [0],
+                    borderColor: '#6c757d',
+                    borderDash: [5, 5],
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

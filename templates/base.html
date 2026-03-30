@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Hệ thống Cảnh báo Sạt lở{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <style>
+        /* Layout CSS cơ bản để chia Sidebar và Content */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            overflow-x: hidden;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar Styling */
+        #sidebar {
+            width: 250px;
+            background: #212529;
+            color: white;
+            padding-top: 15px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s;
+        }
+
+        #sidebar .sidebar-header {
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #343a40;
+            margin-bottom: 20px;
+        }
+
+        #sidebar ul.components {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            flex-grow: 1; /* Đẩy footer xuống dưới */
+        }
+
+        #sidebar ul li a {
+            padding: 12px 20px;
+            display: block;
+            color: #adb5bd;
+            text-decoration: none;
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+
+        #sidebar ul li a:hover, #sidebar ul li a.active {
+            color: #fff;
+            background: #495057;
+            border-left: 4px solid #0d6efd;
+        }
+
+        #sidebar ul li a i {
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
+        /* Content Area Styling */
+        #content-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            width: calc(100% - 250px);
+            overflow-y: auto;
+        }
+
+        .navbar {
+            padding: 15px 20px;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+
+        main {
+            flex-grow: 1;
+            padding: 20px;
+        }
+
+        /* Footer Styling */
+        footer {
+            background: #fff;
+            padding: 15px 20px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            #sidebar {
+                width: 70px; /* Thu gọn sidebar trên mobile */
+            }
+            #sidebar .sidebar-header span.title-text,
+            #sidebar ul li a span {
+                display: none;
+            }
+            #sidebar ul li a {
+                padding: 15px;
+                text-align: center;
+            }
+            #sidebar ul li a i {
+                margin-right: 0;
+                font-size: 1.3rem;
+            }
+            #content-wrapper {
+                width: calc(100% - 70px);
+            }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Sidebar Menu -->
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <i class="bi bi-shield-exclamation text-warning fs-4 me-2"></i>
+            <span class="title-text">Cảnh báo sạt lở</span>
+        </div>
+
+        <ul class="components">
+            <li>
+                <a href="/admin/overview" class="{{ 'active' if 'overview' in request.url.path else '' }}">
+                    <i class="bi bi-house-door border-0"></i>
+                    <span>Tổng quan</span>
+                </a>
+            </li>
+            <li>
+                <a href="/admin/dashboard" class="{{ 'active' if 'dashboard' in request.url.path else '' }}">
+                    <i class="bi bi-graph-up border-0"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="/admin/sensors" class="{{ 'active' if 'sensors' in request.url.path else '' }}">
+                    <i class="bi bi-cpu border-0"></i>
+                    <span>Thiết bị đo</span>
+                </a>
+            </li>
+            <li>
+                <a href="/admin/alerts" class="{{ 'active' if 'alerts' in request.url.path else '' }}">
+                    <i class="bi bi-bell border-0"></i>
+                    <span>Cảnh báo</span>
+                </a>
+            </li>
+            <li>
+                <a href="/admin/thresholds" class="{{ 'active' if 'thresholds' in request.url.path else '' }}">
+                    <i class="bi bi-sliders border-0"></i>
+                    <span>Chỉnh Ngưỡng</span>
+                </a>
+            </li>
+            <li>
+                <a href="/admin/grafana" class="{{ 'active' if 'grafana' in request.url.path else '' }}">
+                    <i class="bi bi-bar-chart-steps border-0"></i>
+                    <span>Grafana</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content Wrapper -->
+    <div id="content-wrapper">
+        <!-- Top Navbar -->
+        <nav class="navbar navbar-expand-lg border-bottom sticky-top">
+            <div class="container-fluid">
+                <!-- Nút toggle sidebar trên Mobile nếu cần -->
+                <button type="button" class="btn btn-light d-md-none border" id="sidebarCollapse">
+                    <i class="bi bi-list"></i>
+                </button>
+                
+                <h5 class="m-0 ms-2 text-dark fw-bold">{% block page_heading %}Hệ thống phân tích cảm biến{% endblock %}</h5>
+                
+                <div class="d-flex align-items-center ms-auto">
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill">
+                        <i class="bi bi-circle-fill small me-1 pulse" style="font-size: 0.5rem; animation: blink 2s infinite;"></i> 
+                        Online
+                    </span>
+                    <button class="btn btn-link text-secondary ms-3"><i class="bi bi-person-circle fs-4"></i></button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Page Content -->
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <div>
+                <strong>Trạng thái:</strong> 
+                {% if system_status %}
+                    <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>{{ system_status }}</span>
+                {% else %}
+                    <span class="text-secondary">Đang kết nối...</span>
+                {% endif %}
+            </div>
+            <div>
+                &copy; 2025 - Landslide Detection System v3
+            </div>
+        </footer>
+    </div>
+
+    <!-- Bootstrap 5 JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <style>
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+    </style>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
