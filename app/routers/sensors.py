@@ -99,3 +99,36 @@ def get_latest_data(sensor_id: str = None, limit: int = 100, db: Session = Depen
          
     records = query.limit(limit).all()
     return {"data": records}
+
+
+@router.post("/api/sensors/register", tags=["Sensors"], summary="Đăng ký trạm cảm biến mới vào hệ thống.")
+def register_sensor(sensor_data: dict, db: Session = Depends(get_db)):
+    """
+    Tạo mới 1 trạm cảm biến trong Database.
+    Nếu trạm đã tồn tại (trùng ID), trả về 409 Conflict.
+    """
+    sensor_id = sensor_data.get("id")
+    if not sensor_id:
+        raise HTTPException(status_code=400, detail="Thiếu trường 'id' cho trạm cảm biến.")
+
+    # Kiểm tra trùng lặp
+    existing = db.query(Sensor).filter(Sensor.id == sensor_id).first()
+    if existing:
+        return {"status": "exists", "detail": f"Trạm {sensor_id} đã tồn tại."}
+
+    # Tạo mới
+    new_sensor = Sensor(
+        id=sensor_id,
+        name=sensor_data.get("name", sensor_id),
+        location=sensor_data.get("location", "Chưa xác định"),
+        latitude=sensor_data.get("latitude"),
+        longitude=sensor_data.get("longitude"),
+        is_active=sensor_data.get("is_active", True)
+    )
+    db.add(new_sensor)
+    db.commit()
+    db.refresh(new_sensor)
+
+    logger.info(f"Đã đăng ký trạm mới: {sensor_id}")
+    return {"status": "created", "sensor_id": new_sensor.id}
+

@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 import os
 import logging
-from app.routers import sensors, admin
+from app.routers import sensors, admin, alerts, thresholds
 from contextlib import asynccontextmanager
 
 # Cấu hình logging global
@@ -53,4 +53,5 @@ app.include_router(sensors.router)
 # --- Jinja2 HTML Routers ---
 app.include_router(admin.router)
 
-# Tương lai gắn thêm alerts, thresholds API
+app.include_router(alerts.router)
+app.include_router(thresholds.router)

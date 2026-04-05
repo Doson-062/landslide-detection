@@ -77,14 +77,14 @@ class Threshold(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     
-    nghieng_warn = Column(Float, nullable=False, default=5.0, comment="Ngưỡng nghiêng mức chú ý")
-    nghieng_danger = Column(Float, nullable=False, default=15.0, comment="Ngưỡng nghiêng mức nguy hiểm")
+    nghieng_warn = Column(Float, nullable=False, default=10.0, comment="Ngưỡng nghiêng mức chú ý")
+    nghieng_danger = Column(Float, nullable=False, default=20.0, comment="Ngưỡng nghiêng mức nguy hiểm")
     
-    rung_warn = Column(Float, nullable=False, default=0.5, comment="Ngưỡng rung mức chú ý")
-    rung_danger = Column(Float, nullable=False, default=2.0, comment="Ngưỡng rung mức nguy hiểm")
+    rung_warn = Column(Float, nullable=False, default=3.0, comment="Ngưỡng rung mức chú ý")
+    rung_danger = Column(Float, nullable=False, default=6.0, comment="Ngưỡng rung mức nguy hiểm")
     
     mua_warn = Column(Float, nullable=False, default=30.0, comment="Ngưỡng mưa mức chú ý (mm/h)")
-    mua_danger = Column(Float, nullable=False, default=80.0, comment="Ngưỡng mưa mức nguy hiểm (mm/h)")
+    mua_danger = Column(Float, nullable=False, default=60.0, comment="Ngưỡng mưa mức nguy hiểm (mm/h)")
 
 
 class TestResult(Base):
