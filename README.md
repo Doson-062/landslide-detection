@@ -131,7 +131,7 @@ Mở trình duyệt: [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
 ## 👤 Tác giả
 
-- **Doson-062** — Sinh viên Công nghệ Thông tin
+- **Đỗ Thanh Sơn** — IT2-02-k68
 
 ## 📄 License
 
