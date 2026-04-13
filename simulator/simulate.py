@@ -1,7 +1,7 @@
 """
 Module Giả Lập Trạm Cảm Biến (Simulator).
 Tự động sinh dữ liệu ngẫu nhiên và gửi POST lên FastAPI Server mỗi 5 giây.
-Cứ sau 20 chu kỳ sẽ tiêm 1 Anomaly (dữ liệu bất thường) để kích hoạt cảnh báo.
+Cứ sau 5 chu kỳ sẽ tiêm 1 Anomaly (dữ liệu bất thường) để kích hoạt cảnh báo.
 """
 
 import time
