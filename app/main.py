@@ -9,8 +9,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 import os
 import logging
+from dotenv import load_dotenv
 from app.routers import sensors, admin, alerts, thresholds
 from contextlib import asynccontextmanager
+
+# Nạp cấu hình từ file .env
+load_dotenv()
+
 
 # Cấu hình logging global
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(name)s | %(levelname)s | %(message)s")

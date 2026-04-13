@@ -4,6 +4,7 @@ Thực hiện các API Endpoint liên quan đến việc tạo/đọc/lưu dữ 
 """
 
 import time
+import os
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -78,8 +79,21 @@ def receive_sensor_data(data: SensorDataIn, db: Session = Depends(get_db)):
         db.add(db_alert)
         db.commit()
         
-        # TODO: Tuần 6 Send Telegram Alert (Chưa có hàm này, sẽ viết sau)
-        # telegram.send(f"⚠️ {level.upper()} ALERT: {msg}")
+        # Gửi Telegram Alert
+        bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+        chat_id = os.getenv("TELEGRAM_CHAT_ID")
+        
+        if bot_token and chat_id:
+            try:
+                import requests
+                # Dùng cờ cảnh báo (icon) để làm màu mè bản tin telegram
+                icon = "🔴" if level == 'red' else "🟡"
+                message_text = f"{icon} CẢNH BÁO SẠT LỞ TRẠM {sensor.id} {icon}\n\nChi tiết: {msg}"
+                url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+                # Đặt timeout ngắn (2 giây) tránh làm lag Cổng API chính
+                requests.post(url, json={"chat_id": chat_id, "text": message_text}, timeout=2)
+            except Exception as e:
+                logger.error(f"Lỗi khi gửi Telegram: {e}")
 
     detect_time_ms = (time.time() - start_time) * 1000
     

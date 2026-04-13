@@ -93,9 +93,9 @@ def simulate_station(sensor_id):
     while True:
         cycle_count += 1
 
-        # Logic: Cứ mỗi 20 chu kỳ thì đánh úp hệ thống bằng 1 Anomaly
+        # Logic: Cứ mỗi 5 chu kỳ thì đánh úp hệ thống bằng 1 Anomaly
         is_normal = True
-        if cycle_count % 20 == 0:
+        if cycle_count % 5 == 0:
             is_normal = False
             logger.warning(f"[{sensor_id}] ĐANG BƠM MÃ ĐỘC (ANOMALY) VÀO CHU KỲ {cycle_count}!")
 
