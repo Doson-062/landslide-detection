@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Cấu hình Ngưỡng - {{ page_title }}{% endblock %}
+
+{% block page_heading %}<i class="bi bi-sliders text-primary me-2"></i>{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white border-bottom p-4">
+                    <h5 class="mb-0 fw-bold">Thiết lập tham số cảnh báo sạt lở</h5>
+                    <p class="text-muted small mb-0">Hệ thống sẽ tự động đối chiếu dữ liệu cảm biến với các con số này để phát cảnh báo.</p>
+                </div>
+                <div class="card-body p-4">
+                    
+                    <div id="alert-status"></div>
+
+                    <form action="/api/thresholds/" method="POST" id="threshold-form">
+                        
+                        <!-- Nhóm 1: Độ nghiêng -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-dark border-start border-4 border-primary ps-2 mb-3">1. Cảm biến Độ Nghiêng (Tilt)</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold text-warning">Mức Chú ý (Warning) - Độ (°)</label>
+                                    <input type="number" step="0.1" class="form-control" name="nghieng_warn" id="nghieng_warn" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold text-danger">Mức Nguy hiểm (Danger) - Độ (°)</label>
+                                    <input type="number" step="0.1" class="form-control" name="nghieng_danger" id="nghieng_danger" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nhóm 2: Độ rung -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-dark border-start border-4 border-info ps-2 mb-3">2. Cảm biến Độ Rung (Vibration)</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold text-warning">Mức Chú ý (Warning) - m/s²</label>
+                                    <input type="number" step="0.1" class="form-control" name="rung_warn" id="rung_warn" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold text-danger">Mức Nguy hiểm (Danger) - m/s²</label>
+                                    <input type="number" step="0.1" class="form-control" name="rung_danger" id="rung_danger" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nhóm 3: Lượng mưa -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-dark border-start border-4 border-secondary ps-2 mb-3">3. Cảm biến Lượng mưa (Rainfall)</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold text-warning">Mức Chú ý (Warning) - mm/h</label>
+                                    <input type="number" step="0.1" class="form-control" name="mua_warn" id="mua_warn" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold text-danger">Mức Nguy hiểm (Danger) - mm/h</label>
+                                    <input type="number" step="0.1" class="form-control" name="mua_danger" id="mua_danger" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+                        
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="reset" class="btn btn-light px-4">Khôi phục</button>
+                            <button type="submit" class="btn btn-primary px-5 fw-bold">Lưu cấu hình ngay</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Tải dữ liệu hiện tại từ API
+        fetch('/api/thresholds/')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('nghieng_warn').value = data.nghieng_warn;
+                document.getElementById('nghieng_danger').value = data.nghieng_danger;
+                document.getElementById('rung_warn').value = data.rung_warn;
+                document.getElementById('rung_danger').value = data.rung_danger;
+                document.getElementById('mua_warn').value = data.mua_warn;
+                document.getElementById('mua_danger').value = data.mua_danger;
+            })
+            .catch(error => console.error('Lỗi khi tải cấu hình:', error));
+
+        // 2. Hiển thị thông báo thành công nếu có query param
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('success')) {
+            const statusDiv = document.getElementById('alert-status');
+            statusDiv.innerHTML = `
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i> 
+                    <strong>Thành công!</strong> Cấu hình ngưỡng đã được cập nhật vào Database.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            // Tự động ẩn thông báo sau 3 giây
+            setTimeout(() => {
+                const alert = bootstrap.Alert.getOrCreateInstance(statusDiv.querySelector('.alert'));
+                if (alert) alert.close();
+            }, 3000);
+        }
+    });
+</script>
+{% endblock %}

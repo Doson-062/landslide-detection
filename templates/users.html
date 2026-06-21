@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Tài khoản - Hệ thống Cảnh báo Sạt lở{% endblock %}
+
+{% block page_heading %}Quản lý Tài khoản Hệ thống{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Cột Danh sách người dùng -->
+        <div class="col-md-8 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-dark"><i class="bi bi-people-fill text-primary me-2"></i>Danh sách Tài khoản</h6>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="loadUsers()"><i class="bi bi-arrow-clockwise"></i> Cập nhật</button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tên đăng nhập / Quản trị viên</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTableBody">
+                                <!-- Dữ liệu sẽ được load qua Javascript -->
+                                <tr>
+                                    <td colspan="2" class="text-center text-muted">Đang tải dữ liệu...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột Form thêm mới -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="m-0 font-weight-bold text-dark"><i class="bi bi-person-plus-fill text-success me-2"></i>Cấp tài khoản mới</h6>
+                </div>
+                <div class="card-body">
+                    <!-- Hiển thị thông báo khi redirect về có query params -->
+                    <div id="alertMessage"></div>
+
+                    <form action="/api/users" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Tên đăng nhập mới</label>
+                            <input type="text" class="form-control" name="username" required minlength="3">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Mật khẩu</label>
+                            <input type="password" class="form-control" name="password" required minlength="6">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-plus-circle me-1"></i>Tạo tài khoản</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Hàm hiển thị message từ URL parameters
+    document.addEventListener("DOMContentLoaded", function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        const success = urlParams.get('success');
+        const alertBox = document.getElementById('alertMessage');
+        
+        if (error) {
+            alertBox.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>' + error + '</div>';
+        } else if (success) {
+            alertBox.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>Tạo tài khoản thành công!</div>';
+        }
+        
+        // Gọi load dữ liệu khi vào trang
+        loadUsers();
+    });
+
+    // Gọi API để load danh sách người dùng
+    function loadUsers() {
+        fetch('/api/users')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('userTableBody');
+                tbody.innerHTML = '';
+                
+                if (data.data && data.data.length > 0) {
+                    data.data.forEach(user => {
+                            let roleBadge = '<span class="badge bg-danger rounded-pill px-3 ms-2">Admin</span>';
+                            
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>#${user.id}</td>
+                                <td class="fw-semibold">${user.username} ${roleBadge}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="2" class="text-center">Không có dữ liệu</td></tr>';
+                }
+            })
+            .catch(error => {
+                console.error("Lỗi khi tải users:", error);
+                document.getElementById('userTableBody').innerHTML = 
+                    '<tr><td colspan="2" class="text-center text-danger">Lỗi kết nối Server</td></tr>';
+            });
+    }
+</script>
+{% endblock %}

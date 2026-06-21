@@ -18,8 +18,8 @@
                             <i class="fs-4 bi bi-droplet-half"></i>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h6 class="text-muted mb-0">Độ ẩm đất</h6>
-                            <h3 class="mb-0 fw-bold" id="card-moisture">-- <small class="fs-6">%</small></h3>
+                            <h6 class="text-muted mb-0">Độ nghiêng</h6>
+                            <h3 class="mb-0 fw-bold" id="card-moisture">-- <small class="fs-6">°</small></h3>
                         </div>
                     </div>
                 </div>
@@ -161,80 +161,59 @@
     // Hàm gọi API
     async function fetchSensorData() {
         try {
-            const response = await fetch('/api/sensors/latest');
+            // Sửa đường dẫn đúng với Backend
+            const response = await fetch('/api/sensor-data/latest?limit=20');
             const res = await response.json();
             
-            if (res.status === 'success') {
-                // Lấy tạm dữ liệu SENSOR_01 làm trạm chính
-                const data = res.data.SENSOR_01;
+            if (res.data && res.data.length > 0) {
+                // Lấy bản ghi mới nhất (đầu tiên trong mảng desc)
+                const data = res.data[0];
                 
-                // Cập nhật lên Card (giả lập độ rung ngẫu nhiên cho đẹp do JSON API rỗng vibration)
-                document.getElementById('card-moisture').innerHTML = `${data.soil_moisture} <small class="fs-6">%</small>`;
-                document.getElementById('card-rainfall').innerHTML = `${data.rainfall} <small class="fs-6">mm</small>`;
-                const mockVibration = (Math.random() * 0.5).toFixed(2);
-                document.getElementById('card-vibration').innerHTML = `${mockVibration} <small class="fs-6">m/s²</small>`;
+                // Cập nhật lên Card (Dữ liệu thực từ DB)
+                document.getElementById('card-moisture').innerHTML = `${data.do_nghieng} <small class="fs-6">°</small>`;
+                document.getElementById('card-rainfall').innerHTML = `${data.luong_mua} <small class="fs-6">mm</small>`;
+                document.getElementById('card-vibration').innerHTML = `${data.do_rung} <small class="fs-6">m/s²</small>`;
                 
-                // Logic Badge Màu dựa trên mức cảnh báo
-                // Gán tạm Logic: if moisture > 40 hoặc rainfall > 2 => Cảnh báo Vàng (1). Nếu > cao nữa là Đỏ (3)
-                let alertLevel = 0;
+                // Logic Badge Màu dựa trên mức sạt lở (Lấy từ API nếu có, hoặc tính toán sơ bộ)
+                // Ở đây ta chỉ hiển thị trạng thái dựa trên dữ liệu mới nhất
                 let alertText = "An toàn";
                 let alertClass = "bg-success";
-                let iconClass = "text-success";
-                let boxClass = "bg-success bg-opacity-10";
-
-                if (data.soil_moisture > 45 || data.rainfall > 5.0) {
-                    alertLevel = 3;
-                    alertText = "Nguy hiểm (3)";
+                
+                // Tạm thời hiển thị trạng thái An toàn/Cảnh báo dựa trên con số
+                if (data.do_nghieng > 20 || data.luong_mua > 50) {
+                    alertText = "Nguy hiểm";
                     alertClass = "bg-danger";
-                    iconClass = "text-danger";
-                    boxClass = "bg-danger bg-opacity-10";
-                } else if (data.soil_moisture > 42 || data.rainfall > 2.0) {
-                    alertLevel = 2;
-                    alertText = "Cảnh báo (2)";
+                } else if (data.do_nghieng > 10 || data.luong_mua > 20) {
+                    alertText = "Cảnh báo";
                     alertClass = "bg-warning text-dark";
-                    iconClass = "text-warning";
-                    boxClass = "bg-warning bg-opacity-10";
-                } else if (data.soil_moisture > 40 || data.rainfall > 1.0) {
-                    alertLevel = 1;
-                    alertText = "Chú ý (1)";
-                    alertClass = "bg-info text-dark";
-                    iconClass = "text-info";
-                    boxClass = "bg-info bg-opacity-10";
                 }
 
                 document.getElementById('card-alert-level').className = `badge ${alertClass} fs-6`;
                 document.getElementById('card-alert-level').innerText = alertText;
                 
-                // Update Icon Colors
-                const iconBox = document.getElementById('icon-alert-box');
-                const icon = document.getElementById('icon-alert');
-                iconBox.className = `flex-shrink-0 ${boxClass} ${iconClass} rounded-circle p-3`;
-                icon.className = `fs-4 bi bi-shield-exclamation ${iconClass}`;
+                // Cập nhật Chart.js (Vẽ toàn bộ mảng dữ liệu đã fetch)
+                const records = [...res.data].reverse(); // Đảo ngược để vẽ từ cũ đến mới
                 
-                // Cập nhật Chart.js
-                const now = new Date();
-                const timeString = now.toLocaleTimeString('vi-VN');
-                document.getElementById('last-update').innerText = 'Cập nhật: ' + timeString;
+                const labels = records.map(r => {
+                    const d = new Date(r.timestamp);
+                    return d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                });
+                const nghiengVals = records.map(r => r.do_nghieng);
+                const rungVals = records.map(r => r.do_rung);
 
-                if (timeLabels.length >= maxDataPoints) {
-                    timeLabels.shift();
-                    moistureData.shift();
-                    rainfallData.shift();
-                }
-                
-                timeLabels.push(timeString);
-                
-                // Làm cho data API có tí dao động nhỏ real-time giả lập
-                const varMoisture = data.soil_moisture + (Math.random() * 2 - 1);
-                const varRainfall = data.rainfall + (Math.random() * 0.5 - 0.2);
-                
-                moistureData.push(varMoisture.toFixed(1));
-                rainfallData.push(Math.max(0, varRainfall.toFixed(1)));
+                sensorChart.data.labels = labels;
+                sensorChart.data.datasets[0].label = 'Độ nghiêng (°)';
+                sensorChart.data.datasets[0].data = nghiengVals;
+                sensorChart.data.datasets[1].label = 'Độ rung (m/s²)';
+                sensorChart.data.datasets[1].data = rungVals;
                 
                 sensorChart.update();
+                
+                const now = new Date();
+                document.getElementById('last-update').innerText = 'Cập nhật: ' + now.toLocaleTimeString('vi-VN');
             }
         } catch (error) {
-            console.error('Lỗi khi fetch data:', error);
+            console.error('Lỗi khi fetch data Dashboard:', error);
         }
     }
 

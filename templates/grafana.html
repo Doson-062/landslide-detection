@@ -24,17 +24,14 @@
                 <p>Khung này sẽ được thay thế bằng Web Dashboard của Grafana qua thẻ <code>&lt;iframe&gt;</code></p>
             </div>
 
-            <!-- src thẻ thay bằng ip Grafana của bạn, VD: http://localhost:3000/d/landslide/dashboard -->
-            <!-- Uncomment đoạn dưới nếu có Grafana live -->
-            <!--
+            <!-- Iframe Grafana Live -->
             <iframe 
-                src="http://localhost:3000/login" 
+                src="{{ grafana_url }}" 
                 width="100%" 
                 height="100%" 
                 frameborder="0" 
-                style="z-index: 1; position: relative;"
+                style="z-index: 1; position: relative; border: none;"
             ></iframe>
-            -->
         </div>
     </div>
 </div>

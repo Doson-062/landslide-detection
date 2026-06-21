@@ -81,30 +81,81 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Biểu đồ placeholder - sẽ được thay bằng dữ liệu thực từ API
-    const ctx = document.getElementById('overview-chart');
-    if (ctx) {
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['--'],
-                datasets: [{
-                    label: 'Chưa có dữ liệu',
-                    data: [0],
-                    borderColor: '#6c757d',
-                    borderDash: [5, 5],
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'top' }
-                }
-            }
-        });
+    function loadStats() {
+        fetch('/api/stats')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('sensor-count').innerText = data.total_sensors;
+                document.getElementById('alert-count').innerText = data.today_alerts;
+                
+                const riskEl = document.getElementById('risk-level');
+                riskEl.innerText = data.risk_level;
+                riskEl.className = `fw-bold ${data.risk_class}`;
+            });
+            
+        // Load cảnh báo gần nhất
+        fetch('/api/alerts?limit=5')
+            .then(res => res.json())
+            .then(data => {
+                const recentDiv = document.getElementById('recent-alerts');
+                if (data.data.length === 0) return;
+                
+                let html = '<div class="list-group list-group-flush">';
+                data.data.forEach(a => {
+                    const color = a.level === 3 ? 'danger' : 'warning';
+                    html += `
+                        <div class="list-group-item px-0 border-0 mb-2">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1 fw-bold text-${color}">${a.sensor_id}</h6>
+                                <small>${a.timestamp.split(' ')[1]}</small>
+                            </div>
+                            <p class="mb-1 small text-muted">${a.message}</p>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                recentDiv.innerHTML = html;
+            });
     }
+
+    // Vẽ biểu đồ thực tế từ dữ liệu 100 bản ghi mới nhất
+    function loadOverviewChart() {
+        fetch('/api/sensor-data/latest?limit=20')
+            .then(res => res.json())
+            .then(data => {
+                const records = data.data.reverse();
+                const labels = records.map(r => r.timestamp.split('T')[1].substring(0, 5));
+                const nghiengData = records.map(r => r.do_nghieng);
+                
+                const ctx = document.getElementById('overview-chart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Độ nghiêng (°)',
+                            data: nghiengData,
+                            borderColor: '#0d6efd',
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: false } }
+                    }
+                });
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadStats();
+        loadOverviewChart();
+    });
 </script>
 {% endblock %}

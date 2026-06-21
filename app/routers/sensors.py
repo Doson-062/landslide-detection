@@ -11,7 +11,8 @@ from app.database import get_db
 from app.models import Sensor, SensorData, Alert, Threshold
 from app.schemas import SensorDataIn
 from detection.engine import check_alert_level
-from datetime import datetime
+from datetime import datetime, timedelta
+from sqlalchemy import func
 import logging
 
 logger = logging.getLogger("Router.Sensors")
@@ -115,6 +116,27 @@ def get_latest_data(sensor_id: str = None, limit: int = 100, db: Session = Depen
     return {"data": records}
 
 
+@router.get("/api/stats", tags=["Dashboard"], summary="Lấy thống kê tổng hợp cho trang Tổng quan.")
+def get_system_stats(db: Session = Depends(get_db)):
+    """Trả về số lượng trạm, cảnh báo hôm nay và mức độ rủi ro."""
+    total_sensors = db.query(Sensor).count()
+    
+    # Cảnh báo trong 24h qua
+    yesterday = datetime.utcnow() - timedelta(days=1)
+    today_alerts = db.query(Alert).filter(Alert.timestamp >= yesterday).count()
+    
+    # Mức độ rủi ro (Dựa trên alert cao nhất chưa resolved)
+    latest_danger = db.query(Alert).filter(Alert.level == 3, Alert.is_resolved == False).first()
+    risk_text = "Cao" if latest_danger else "Thấp"
+    risk_class = "text-danger" if latest_danger else "text-success"
+    
+    return {
+        "total_sensors": total_sensors,
+        "today_alerts": today_alerts,
+        "risk_level": risk_text,
+        "risk_class": risk_class
+    }
+
 @router.post("/api/sensors/register", tags=["Sensors"], summary="Đăng ký trạm cảm biến mới vào hệ thống.")
 def register_sensor(sensor_data: dict, db: Session = Depends(get_db)):
     """
@@ -125,10 +147,17 @@ def register_sensor(sensor_data: dict, db: Session = Depends(get_db)):
     if not sensor_id:
         raise HTTPException(status_code=400, detail="Thiếu trường 'id' cho trạm cảm biến.")
 
-    # Kiểm tra trùng lặp
+    # Kiểm tra trùng lặp và cập nhật nếu có thay đổi cấu hình
     existing = db.query(Sensor).filter(Sensor.id == sensor_id).first()
     if existing:
-        return {"status": "exists", "detail": f"Trạm {sensor_id} đã tồn tại."}
+        existing.name = sensor_data.get("name", existing.name)
+        existing.location = sensor_data.get("location", existing.location)
+        existing.latitude = sensor_data.get("latitude", existing.latitude)
+        existing.longitude = sensor_data.get("longitude", existing.longitude)
+        existing.is_active = sensor_data.get("is_active", existing.is_active)
+        db.commit()
+        logger.info(f"Đã cập nhật cấu hình trạm: {sensor_id}")
+        return {"status": "updated", "sensor_id": existing.id}
 
     # Tạo mới
     new_sensor = Sensor(
@@ -145,4 +174,70 @@ def register_sensor(sensor_data: dict, db: Session = Depends(get_db)):
 
     logger.info(f"Đã đăng ký trạm mới: {sensor_id}")
     return {"status": "created", "sensor_id": new_sensor.id}
+
+@router.delete("/api/sensors/{sensor_id}", tags=["Sensors"], summary="Xóa trạm cảm biến và các dữ liệu liên quan.")
+def delete_sensor(sensor_id: str, db: Session = Depends(get_db)):
+    sensor = db.query(Sensor).filter(Sensor.id == sensor_id).first()
+    if not sensor:
+        raise HTTPException(status_code=404, detail="Không tìm thấy trạm cảm biến.")
+    
+    # Xóa dữ liệu liên quan
+    db.query(Alert).filter(Alert.sensor_id == sensor_id).delete(synchronize_session=False)
+    db.query(SensorData).filter(SensorData.sensor_id == sensor_id).delete(synchronize_session=False)
+    db.delete(sensor)
+    db.commit()
+    logger.info(f"Đã xóa trạm cảm biến và các dữ liệu liên quan: {sensor_id}")
+    return {"status": "deleted", "sensor_id": sensor_id}
+
+
+@router.get("/api/sensors", tags=["Sensors"], summary="Lấy danh sách trạm và trạng thái hiện tại phục vụ Bản đồ.")
+def get_sensors_status(db: Session = Depends(get_db)):
+    """
+    Trả về danh sách toàn bộ trạm kèm theo tọa độ và trạng thái màu sắc.
+    """
+    sensors = db.query(Sensor).all()
+    
+    # Lấy ngưỡng mặc định để so sánh
+    thres_db = db.query(Threshold).first()
+    if not thres_db:
+        thres_db = Threshold()
+    
+    thres_dict = {
+        'nghieng_warn': thres_db.nghieng_warn,
+        'nghieng_danger': thres_db.nghieng_danger,
+        'rung_warn': thres_db.rung_warn,
+        'rung_danger': thres_db.rung_danger,
+        'mua_warn': thres_db.mua_warn,
+        'mua_danger': thres_db.mua_danger,
+    }
+
+    from sqlalchemy import desc
+    result = []
+    for s in sensors:
+        # Lấy bản ghi dữ liệu mới nhất
+        last_data = db.query(SensorData).filter(SensorData.sensor_id == s.id).order_by(desc(SensorData.timestamp)).first()
+        
+        status = "green"
+        data_values = {}
+        
+        if last_data:
+            data_values = {
+                "do_nghieng": last_data.do_nghieng,
+                "do_rung": last_data.do_rung,
+                "luong_mua": last_data.luong_mua
+            }
+            status, _ = check_alert_level(data_values, thres_dict)
+
+        result.append({
+            "id": s.id,
+            "name": s.name,
+            "location": s.location,
+            "latitude": s.latitude,
+            "longitude": s.longitude,
+            "status": status,
+            "last_data": data_values,
+            "last_seen": last_data.timestamp.isoformat() if last_data else None
+        })
+        
+    return {"data": result}
 

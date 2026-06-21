@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Thiết bị Cảm biến{% endblock %}
+
+{% block page_heading %}Danh sách Thiết bị Đo{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h5 class="m-0"><i class="bi bi-cpu me-2"></i>Trạm Cảm Biến Hệ Thống</h5>
+        <button class="btn btn-primary btn-sm" onclick="alert('Tính năng thêm bằng tay đang được khóa. Simulator sẽ tự động đăng ký trạm khi khởi chạy.')">
+            <i class="bi bi-plus-circle me-1"></i>Thêm Mới
+        </button>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0 table-responsive border-0">
+        <table class="table table-hover align-middle mb-0" id="sensors-table">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Mã Trạm (ID)</th>
+                    <th>Tên Định Danh</th>
+                    <th>Tọa Độ (Kinh/Vĩ)</th>
+                    <th>Hoạt Động</th>
+                    <th class="text-end pe-4">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="sensors-tbody">
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">Đang tải dữ liệu...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function loadSensors() {
+        fetch('/api/sensors')
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('sensors-tbody');
+                if (data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Không có trạm cảm biến nào đang hoạt động. Vui lòng bật Simulator.</td></tr>';
+                    return;
+                }
+                
+                let html = '';
+                data.data.forEach(s => {
+                    html += `
+                        <tr>
+                            <td class="ps-4 fw-bold text-primary">${s.id}</td>
+                            <td>${s.name}</td>
+                            <td>${s.latitude.toFixed(3)}, ${s.longitude.toFixed(3)}</td>
+                            <td>
+                                <span class="badge ${s.is_active ? 'bg-success' : 'bg-secondary'}">
+                                    ${s.is_active ? 'Đang chạy' : 'Đã ngắt'}
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-outline-danger btn-sm" title="Vô hiệu hóa trạm">
+                                    <i class="bi bi-x-circle"></i> Vô hiệu
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            })
+            .catch(err => {
+                document.getElementById('sensors-tbody').innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Lỗi kết nối tới Server.</td></tr>';
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', loadSensors);
+</script>
+{% endblock %}

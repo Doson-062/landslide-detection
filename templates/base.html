@@ -68,6 +68,46 @@
             font-size: 1.1rem;
         }
 
+        /* Sidebar User Info */
+        .sidebar-user {
+            padding: 15px 20px;
+            border-top: 1px solid #343a40;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .sidebar-user .user-info {
+            display: flex;
+            align-items: center;
+        }
+        .sidebar-user .user-info i {
+            font-size: 1.3rem;
+            margin-right: 8px;
+        }
+        .sidebar-user .user-info span {
+            font-size: 0.85rem;
+        }
+        .sidebar-user .btn-logout {
+            color: #adb5bd;
+            font-size: 1rem;
+            padding: 4px 8px;
+            border: none;
+            background: none;
+            transition: 0.2s;
+        }
+        .sidebar-user .btn-logout:hover {
+            color: #e74c3c;
+        }
+
+        /* Admin-only menu label */
+        .menu-section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #6c757d;
+            padding: 8px 20px 4px;
+            letter-spacing: 1px;
+        }
+
         /* Content Area Styling */
         #content-wrapper {
             flex-grow: 1;
@@ -100,13 +140,26 @@
             color: #6c757d;
         }
 
+        /* Role Badge */
+        .role-badge {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+        .role-admin { background: #e74c3c; color: white; }
+        .role-viewer { background: #3498db; color: white; }
+
         /* Mobile Responsive */
         @media (max-width: 768px) {
             #sidebar {
                 width: 70px; /* Thu gọn sidebar trên mobile */
             }
             #sidebar .sidebar-header span.title-text,
-            #sidebar ul li a span {
+            #sidebar ul li a span,
+            #sidebar .menu-section-label,
+            #sidebar .sidebar-user .user-info span {
                 display: none;
             }
             #sidebar ul li a {
@@ -135,6 +188,7 @@
         </div>
 
         <ul class="components">
+            <!-- Mục mọi người đều thấy -->
             <li>
                 <a href="/admin/overview" class="{{ 'active' if 'overview' in request.url.path else '' }}">
                     <i class="bi bi-house-door border-0"></i>
@@ -148,9 +202,9 @@
                 </a>
             </li>
             <li>
-                <a href="/admin/sensors" class="{{ 'active' if 'sensors' in request.url.path else '' }}">
-                    <i class="bi bi-cpu border-0"></i>
-                    <span>Thiết bị đo</span>
+                <a href="/admin/map" class="{{ 'active' if 'map' in request.url.path else '' }}">
+                    <i class="bi bi-geo-alt border-0"></i>
+                    <span>Bản đồ</span>
                 </a>
             </li>
             <li>
@@ -159,19 +213,55 @@
                     <span>Cảnh báo</span>
                 </a>
             </li>
+
+
+            <!-- Mục chỉ Admin mới thấy -->
+            {% if user %}
+            <div class="menu-section-label">QUẢN TRỊ</div>
+            <li>
+                <a href="/admin/sensors" class="{{ 'active' if 'sensors' in request.url.path else '' }}">
+                    <i class="bi bi-cpu border-0"></i>
+                    <span>Thiết bị đo</span>
+                </a>
+            </li>
+            <li>
+                <a href="/admin/users" class="{{ 'active' if 'users' in request.url.path else '' }}">
+                    <i class="bi bi-people border-0"></i>
+                    <span>Tài khoản</span>
+                </a>
+            </li>
             <li>
                 <a href="/admin/thresholds" class="{{ 'active' if 'thresholds' in request.url.path else '' }}">
                     <i class="bi bi-sliders border-0"></i>
                     <span>Chỉnh Ngưỡng</span>
                 </a>
             </li>
-            <li>
-                <a href="/admin/grafana" class="{{ 'active' if 'grafana' in request.url.path else '' }}">
-                    <i class="bi bi-bar-chart-steps border-0"></i>
-                    <span>Grafana</span>
-                </a>
-            </li>
+            {% endif %}
         </ul>
+
+        <!-- User Info ở cuối sidebar -->
+        {% if user %}
+        <div class="sidebar-user">
+            <div class="user-info">
+                <i class="bi bi-person-circle"></i>
+                <span>
+                    {{ user.username }}
+                    <span class="role-badge role-admin">
+                        Admin
+                    </span>
+                </span>
+            </div>
+            <a href="/logout" class="btn-logout" title="Đăng xuất">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
+        </div>
+        {% else %}
+        <div class="sidebar-user justify-content-center">
+            <a href="/login" class="btn btn-outline-secondary btn-sm w-100 border-0 text-start" style="color: #adb5bd;">
+                <i class="bi bi-box-arrow-in-right me-2"></i> Đăng nhập Quản trị
+            </a>
+        </div>
+        {% endif %}
     </nav>
 
     <!-- Main Content Wrapper -->
@@ -191,7 +281,11 @@
                         <i class="bi bi-circle-fill small me-1 pulse" style="font-size: 0.5rem; animation: blink 2s infinite;"></i> 
                         Online
                     </span>
-                    <button class="btn btn-link text-secondary ms-3"><i class="bi bi-person-circle fs-4"></i></button>
+                    {% if user %}
+                    <span class="ms-3 text-muted small">
+                        <i class="bi bi-person-fill me-1"></i>{{ user.username }}
+                    </span>
+                    {% endif %}
                 </div>
             </div>
         </nav>

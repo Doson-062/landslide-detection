@@ -106,6 +106,20 @@ class TestResult(Base):
     
     tested_at = Column(DateTime, default=datetime.datetime.utcnow, comment="Thời gian chạy bài kiểm thử")
 
+
+class User(Base):
+    """
+    Bảng lưu trữ tài khoản người dùng hệ thống.
+    Hỗ trợ phân quyền: admin (toàn quyền) và viewer (chỉ xem).
+    """
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    username = Column(String, unique=True, nullable=False, comment="Tên đăng nhập")
+    password_hash = Column(String, nullable=False, comment="Mật khẩu đã mã hóa SHA-256")
+    role = Column(String, default="viewer", nullable=False, comment="Vai trò: admin hoặc viewer")
+
+
 # Gọi lệnh tạo tất cả các bảng khai báo ở trên vào Database
 # Hàm này an toàn và sẽ không xóa bảng nếu bảng đã tồn tại
 Base.metadata.create_all(bind=engine)

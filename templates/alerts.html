@@ -12,13 +12,12 @@
             
             <!-- Filter -->
             <div class="d-flex gap-2">
-                <select class="form-select" style="width: auto;">
+                <select id="alert-level-filter" class="form-select" style="width: auto;" onchange="filterAlerts()">
                     <option value="all">Tất cả mức độ</option>
-                    <option value="critical">Nguy hiểm (Critical)</option>
-                    <option value="alert">Cảnh báo (Alert)</option>
-                    <option value="warning">Chú ý (Warning)</option>
+                    <option value="3">Nguy hiểm (Red)</option>
+                    <option value="2">Cảnh báo (Yellow)</option>
                 </select>
-                <button class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i> Load lại</button>
+                <button class="btn btn-outline-secondary" onclick="loadAlerts()"><i class="bi bi-arrow-clockwise"></i> Load lại</button>
             </div>
         </div>
         
@@ -35,44 +34,100 @@
                         </tr>
                     </thead>
                     <tbody id="alerts-table-body">
-                        <!-- Data đổ bằng JS hoặc Jinja2 (Ở đây để Mock tĩnh demo tạm) -->
+                        <!-- Data sẽ được tải tự động qua Javascript -->
                         <tr>
-                            <td class="ps-4">2026-03-22 15:40:12</td>
-                            <td><span class="badge bg-danger rounded-pill px-3 py-2"><i class="bi bi-exclamation-triangle-fill me-1"></i> Nguy hiểm (3)</span></td>
-                            <td class="fw-bold">SENSOR_03</td>
-                            <td>Áp lực nước và Lượng mưa vượt gắt ngưỡng Critical (>80mm/h)</td>
-                            <td><span class="text-success"><i class="bi bi-check-circle me-1"></i> Đã gửi Telegram</span></td>
-                        </tr>
-                        <tr>
-                            <td class="ps-4">2026-03-21 08:15:00</td>
-                            <td><span class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="bi bi-info-circle-fill me-1"></i> Cảnh báo (2)</span></td>
-                            <td class="fw-bold">SENSOR_02</td>
-                            <td>Độ rung tăng đều (>1.0 m/s2) liên tiếp trong 30p</td>
-                            <td><span class="text-success"><i class="bi bi-check-circle me-1"></i> Đã gửi Telegram</span></td>
-                        </tr>
-                        <tr>
-                            <td class="ps-4">2026-03-20 23:10:45</td>
-                            <td><span class="badge bg-info text-dark rounded-pill px-3 py-2"><i class="bi bi-eye-fill me-1"></i> Chú ý (1)</span></td>
-                            <td class="fw-bold">SENSOR_01</td>
-                            <td>Độ ẩm đất bắt đầu vượt ngưỡng báo động nhẹ (>70%)</td>
-                            <td><span class="text-muted"><i class="bi bi-clock me-1"></i> Ghi nhận log log</span></td>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                Đang tải nhật ký cảnh báo...
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
         
-        <div class="card-footer bg-white p-3 border-top-0 d-flex justify-content-end">
+        <div class="card-footer bg-white p-3 border-top-0 d-flex justify-content-between align-items-center">
+             <small class="text-muted" id="alert-count-info">Hiển thị 0 bản ghi mới nhất</small>
              <nav aria-label="Page navigation">
                 <ul class="pagination pagination-sm mb-0">
                     <li class="page-item disabled"><a class="page-link" href="#">Trước</a></li>
                     <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item"><a class="page-link" href="#">Sau</a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#">Sau</a></li>
                 </ul>
             </nav>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.allAlertsData = [];
+
+    function renderAlerts(alerts) {
+        const tbody = document.getElementById('alerts-table-body');
+        let html = '';
+        
+        if (alerts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">Không tìm thấy cảnh báo nào phù hợp.</td></tr>';
+            document.getElementById('alert-count-info').innerText = `Hiển thị 0 bản ghi`;
+            return;
+        }
+
+        alerts.forEach(a => {
+            let levelBadge = '';
+            if (a.level == 3) {
+                levelBadge = '<span class="badge bg-danger rounded-pill px-3 py-2"><i class="bi bi-exclamation-triangle-fill me-1"></i> Nguy hiểm (Red)</span>';
+            } else if (a.level == 2) {
+                levelBadge = '<span class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="bi bi-info-circle-fill me-1"></i> Cảnh báo (Yellow)</span>';
+            } else {
+                levelBadge = '<span class="badge bg-info text-dark rounded-pill px-3 py-2">Chú ý (1)</span>';
+            }
+
+            html += `
+                <tr>
+                    <td class="ps-4 text-muted small">${a.timestamp}</td>
+                    <td>${levelBadge}</td>
+                    <td class="fw-bold text-primary">${a.sensor_id} <small class="text-muted d-block fw-normal">${a.sensor_name || ''}</small></td>
+                    <td><div class="small text-dark">${a.message}</div></td>
+                    <td>
+                        <span class="text-success small"><i class="bi bi-check-circle-fill me-1"></i> Đã ghi Log</span>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+        document.getElementById('alert-count-info').innerText = `Hiển thị ${alerts.length} bản ghi`;
+    }
+
+    function filterAlerts() {
+        const filterVal = document.getElementById('alert-level-filter').value;
+        if (filterVal === 'all') {
+            renderAlerts(window.allAlertsData);
+        } else {
+            const filtered = window.allAlertsData.filter(a => String(a.level) === filterVal);
+            renderAlerts(filtered);
+        }
+    }
+
+    function loadAlerts() {
+        const tbody = document.getElementById('alerts-table-body');
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Đang tải dữ liệu...</td></tr>';
+        
+        fetch('/api/alerts')
+            .then(response => response.json())
+            .then(data => {
+                window.allAlertsData = data.data;
+                filterAlerts(); // Gọi hàm lọc để render Data theo cả Option hiện tại
+            })
+            .catch(error => {
+                console.error('Lỗi khi tải nhật ký cảnh báo:', error);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-danger">Lỗi khi kết nối Server.</td></tr>';
+            });
+    }
+
+    // Tải dữ liệu lần đầu
+    document.addEventListener('DOMContentLoaded', loadAlerts);
+</script>
 {% endblock %}
